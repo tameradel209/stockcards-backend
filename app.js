@@ -23,6 +23,7 @@ var userPackagesRouter = require('./routes/userPackages')
 var userOrdersRouter = require('./routes/userOrders')
 var offerRouter = require('./routes/offers')
 var advantageRouter = require('./routes/advantages')
+var userCartRouter = require('./routes/cart')
 var imagesRouter = require('./routes/images')
 var authentication = require('./authentication')
 
@@ -67,6 +68,7 @@ app.use(api + '/orders', userOrdersRouter)
 app.use(api + '/offers', offerRouter)
 app.use(api + '/advantages', advantageRouter)
 app.use(api + '/images', imagesRouter)
+app.use(api + '/cart', userCartRouter)
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
