@@ -79,7 +79,7 @@ cardRouter.route('/')
 
 cardRouter.route('/array')
 
-.get((req, res, next) => {
+.post((req, res, next) => {
     Cards.find({_id:req.body})
         .then(cards => {
             res.status(200).json(cards)
