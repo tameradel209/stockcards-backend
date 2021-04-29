@@ -28,7 +28,9 @@ const UserSchema = new Schema({
     admin:{
         type: Boolean,
         default: false
-    }
+    },
+    resetToken: String,
+    expireToken:Date 
 }, {timestamps:true})
 
 UserSchema.virtual('id').get(function () { return this._id.toHexString() })

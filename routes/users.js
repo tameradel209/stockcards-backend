@@ -3,7 +3,11 @@ var bodyParser = require('body-parser')
 var Users = require('../models/users')
 var passport = require('passport')
 var authentication = require('../authentication')
-const UploadImage = require('../upload')
+var crypto = require('crypto')
+const bcryptjs = require('bcryptjs')
+const sendEmail = require('./sendEmail')
+const UploadImage = require('../upload');
+const { token } = require('morgan');
 
 const upload = UploadImage('user')
 var UsersRouter = express.Router();
@@ -131,18 +135,81 @@ UsersRouter.route('/checkjwt')
   })(req, res)
 })
 
+UsersRouter.route('/resetpassword')
+
+  .post( async (req, res, next) => {
+
+     try{
+      const random = Math.floor(Math.random() * 1000000)
+      const token = bcryptjs.hashSync(String(random), 10)
+      Users.findOne({username:req.body.username})
+      .then(User => {
+        if (User != null) {
+          User.resetToken = token
+          User.expireToken = Date.now() + 3600000
+          return User.save()
+            .then(result => 
+              sendEmail({
+                to: req.body.username,
+                from: 'tameradel209@gmail.com',
+                subject: 'password reset',
+                text: "Hello world?",
+                html:
+                  `
+                    <p>Your requested for password reset</p>
+                    <h5>please use this code : ${random}</h5>
+                    <h5>to reset your password</h5>
+                  `
+              })
+            )
+            .then(info => res.status(200).json({ message: 'check your email' }))
+        }
+        return res.status(404).json({err:'username is not found'})
+      })
+    }
+    catch (err) { res.send(err.message) } 
+  })
+
+  .put( async (req, res, next) => {
+
+    try {
+      const User = await Users.findOne({username:req.body.username})
+
+      if (User != null) {
+        if (bcryptjs.compareSync(req.body.code, User.resetToken)){
+          if (User.expireToken > Date.now()){
+            await User.setPassword(req.body.password);
+            User.resetToken=null;
+            User.expireToken=null;
+            User.save((err, user) => err ? res.status(500).json({err:err.message}): res.status(200).json(user))            
+          }
+          else{
+            return res.status(403).json({ mesage: 'code is expired' })
+          }
+        }
+        else{
+          return res.status(403).json({mesage:'code is not right'})
+        }
+      }
+      else { res.status(404).json({err:'user not found'}) }
+    }
+    catch (err) { res.send(err) }
+
+  })
+
 UsersRouter.route('/:userId')
 
-  .put(upload.single('image'), async (req, res, next) => {
+  .put(authentication.verifyUser, upload.single('image'), async (req, res, next) => {
+    console.log(req.user._id)
     try {
       if (req.file) {
         var image = `${req.protocol}://${req.get('host')}/${req.file.destination}/${req.file.filename}`
       }
       
-      const User = await Users.findById(req.params.userId)
+      const User = await Users.findById(req.user._id)
       
       if (User != null) {
-        Users.findByIdAndUpdate(req.params.userId, {
+        Users.findByIdAndUpdate(req.user._id, {
           $set: {...req.body, image}}, { new: true })
           .then(user => res.status(200).json(user))
       }
@@ -153,7 +220,7 @@ UsersRouter.route('/:userId')
   })
 
   .delete((req, res, next) => {
-    Users.findByIdAndDelete(req.params.userId)
+    Users.findByIdAndDelete(req.user._id)
       .then(user => {
         if (user) {
           res.status(200).json(user)
