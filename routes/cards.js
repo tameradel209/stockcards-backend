@@ -77,6 +77,32 @@ cardRouter.route('/')
     .catch(err => res.send(err.message))
 })
 
+const escapeRegex = (text) => {
+    return text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
+};
+
+cardRouter.route('/arsearch')
+
+.get((req, res, next) => {
+    const regex = new RegExp(escapeRegex(req.query.search), 'i')
+    Cards.find({ arname: regex })
+        .then(cards => {
+            res.status(200).json(cards)
+        })
+        .catch(err => res.send(err.message))
+})
+
+cardRouter.route('/ensearch')
+
+.get((req, res, next) => {
+    const regex = new RegExp(escapeRegex(req.query.search), 'i')
+    Cards.find({ enname: regex })
+        .then(cards => {
+            res.status(200).json(cards)
+        })
+        .catch(err => res.send(err.message))
+})
+
 cardRouter.route('/array')
 
 .post((req, res, next) => {

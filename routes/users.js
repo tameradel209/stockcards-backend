@@ -167,7 +167,7 @@ UsersRouter.route('/resetpassword')
         return res.status(404).json({err:'username is not found'})
       })
     }
-    catch (err) { res.send(err.message) } 
+     catch (err){ res.status(500).json({err:err.message}) }
   })
 
   .put( async (req, res, next) => {
