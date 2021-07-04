@@ -21,17 +21,17 @@ cardRouter.route('/')
 
     .post(upload.fields([{ name: 'image', maxCount: 1 }, { name:'compImages', maxCount:10}]), (req, res, next) =>{
     
-    if (req.files.image) {
-        var image = `${req.protocol}://${req.get('host')}/${req.files.image[0].destination}/${req.files.image[0].filename}`
+        if (req.files&&req.files.image) {
+        var imageForm = `${req.protocol}://${req.get('host')}/${req.files.image[0].destination}/${req.files.image[0].filename}`
     }
-    if (req.files.compImages) {
+        if (req.files&&req.files.compImages) {
         var componentsImages = req.files.compImages.map(item => `${req.protocol}://${req.get('host')}/${item.destination}/${item.filename}`)
     }
-    const { color, price, width, height, type, enName, arName, occasions, sectors, packages, components } = req.body
+    const { color, price, image, width, height, type, enName, arName, occasions, sectors, packages, components } = req.body
     if (occasions) { var occArr = occasions.split(' ') }
     if (sectors) { var secArr = sectors.split(' ') }
     if(packages) {var packArr = packages.split(' ')}
-    if(components) {
+    if(components && typeof(components)==String) {
         var tempArr = JSON.parse(components)
         var i = 0
         var compArr = tempArr.map(item => {
@@ -51,11 +51,11 @@ cardRouter.route('/')
         enName,
         arName,
         type,
-        image,
+        image: imageForm ? imageForm: image,
         occasions: occArr,
         sectors: secArr, 
         packages: packArr,
-        components:compArr
+        components:compArr?compArr:components
 
     }
 
